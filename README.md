@@ -66,7 +66,7 @@ This is a Spring Boot-based REST API application designed to manage customer tra
 
    ```bash
 
-   git clone https://github.com/Kameshraj05/RewardsApp.git
+   git clone https://github.com/Kameshraj05/RewardsApplication.git
 
    cd rewards-program
 
