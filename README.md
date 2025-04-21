@@ -8,9 +8,7 @@ This is a Spring Boot-based REST API application designed to manage customer tra
 
 - Handle validation (e.g., invalid date ranges or customer IDs)
 
-- Display results on a frontend table
-
-- Return meaningful error messages from backend and show them in the UI
+- Return meaningful error messages from backend in case of failures
 
 
 ---
@@ -29,20 +27,7 @@ This is a Spring Boot-based REST API application designed to manage customer tra
 
 - REST API
 
-
-
-### Frontend
-
-- HTML5
-
-- Vanilla JavaScript
-
-- CSS (optional for styling)
-
-
-
 ---
-
 
 
 ## 🛠️ How to Run
@@ -68,8 +53,6 @@ This is a Spring Boot-based REST API application designed to manage customer tra
 
    git clone https://github.com/Kameshraj05/RewardsApplication.git
 
-   cd rewards-program
-
   ## Build and Run
 
     'mvn spring-boot:run'
@@ -83,19 +66,29 @@ The application follows a layered architecture, with the following components:
 
 ## Database Design
 ### Entities
-**Transaction:**
+**transaction:**
 - id (Primary Key)
--	customerId
--	transactionDate
--	purchaseAmount
+-	customer_id
+-	transaction_id
+-	amount
+-	transaction_date
+
+  **customer:**
+- id (primary key)
+- customer_id
+- customer_name
 
 ## Table Schema
 | Table       | Column          | Data Type             | Constraints             | Description                                                              |
 | :---------- | :-------------- | :-------------------- | :---------------------- | :----------------------------------------------------------------------- |
-| transaction | id            | VARCHAR(255)          | PRIMARY KEY             | Unique identifier for the transaction.                                   |
-|             | customerId      | VARCHAR(255)          | NOT NULL                | ID of the customer who made the transaction.                           |
-|             | transactionDate | TIMESTAMP             | NOT NULL                | Date and time of the transaction.                                        |
-|             | purchaseAmount  | DECIMAL(10, 2)        | NOT NULL                | Amount of the purchase.                                                  |
+| transaction | id              | VARCHAR(255)          | PRIMARY KEY             | Unique identifier for the transaction.                                   |
+|             | customer_id     | VARCHAR(255)          | NOT NULL                | ID of the customer who made the transaction.                             |
+|             | transaction_id  | VARCHAR(255)          | NOT NULL                | ID of the transaction used for customer reference                        |
+|             | amount          | DECIMAL(10, 2)        | NOT NULL                | Amount of the purchase.                                                  |
+|             | transaction_date| TIMESTAMP             | NOT NULL                | Date and time of the transaction.                                        |
+| customer    | id              | VARCHAR(255)          | PRIMARY KEY             | Unique identifier for the customer.                                      |
+|             | customer_id     | VARCHAR(255)          | NOT NULL                | ID of the customer who made the transaction.                             |
+|             | customer_name   | VARCHAR(255)          | NOT NULL                | Name of the customer who made the transaction.                           |
 
 ## API Specifications
 ### Customer Purchase API
@@ -108,13 +101,17 @@ This API endpoint is responsible for recording customer purchase details, specif
 | Parameter Name    | Data Type       | Occurrence | Description                                                                 |
 | :---------------- | :-------------- | :--------- | :-------------------------------------------------------------------------- |
 | customerId        | String          | 1..1       | Customer Id is the key for customer identification.                         |
-| purchaseAmount    | Double          | 1..1       | This value defines the amount spent by the customer on the purchase.        |
-| transactionDate   | LocalDateTime   | 1..1       | This parameter denotes the date on which the customer made the purchase. |
+| customerName      | String          | 1..1       | Name of the customer                                                        |
+| transactionId     | String          | 1..1       | This parameter is the key for transaction identification.                   |
+| amount            | Double          | 1..1       | This value defines the amount spent by the customer on the purchase.        |
+| transactionDate   | LocalDateTime   | 1..1       | This parameter denotes the date on which the customer made the purchase.    |
 ### Request Sample Data
 '{ 
-"customerId": "CUST123", 
-"transactionDate": "2024-07-28T10:00:00", 
-"purchaseAmount": 125.50
+"customerId": "CUST001", 
+"customerName: "Alice Smith", 
+"transactionId": "TXN001", 
+"amount": 125.50,
+"transactionDate": "2025-04-01T10:00:00"
  }
 '
 ### Response Data
@@ -129,41 +126,72 @@ In the response of this API, the client will receive the HTTP status code along 
 This API allows for retrieving customer transaction history and calculating rewards points based on that history. It is designed to be used by front-end applications and other systems that need to access and display customer rewards data.
 ### API Description
 1. Method:GET
-2. Endpoint: /customer/{customerId}?fromDate={fromDate}&toDate={toDate}
+2. Endpoint: /customers/{customerId}?fromDate={fromDate}&toDate={toDate}
 3. Response Content Type: application/json
 ### Request Parameters
 | Parameter Name    | Data Type       | Occurrence | Description                                                                 |
 | :---------------- | :-------------- | :--------- | :-------------------------------------------------------------------------- |
 | customerId        | String          | 1..1       | Customer Id is the key for customer identification.                         |
-| fromDate    | LocalDate          | 1..1       | The user input to provide the start date to fetch customer transactions.        |
-| toDate   | LocalDate   | 1..1       | The user input to provide the end date to fetch customer transactions. |
+| fromDate          | LocalDate       | 0..1       | The user input to provide the start date to fetch customer transactions.    |
+| toDate            | LocalDate       | 0..1       | The user input to provide the end date to fetch customer transactions.      |
 ### Request Sample Data
-'Sample url: /customer/CUST123?fromDate=2024-01-01&toDate=2024-07-31'
+'Sample url: /customers/CUST001?fromDate=2025-02-01&toDate=2025-04-30'
 ### Response Parameters
 | Parameter Name    | Data Type       | Occurrence | Description                                                                 |
 | :---------------- | :-------------- | :--------- | :-------------------------------------------------------------------------- |
 | customerId        | String          | 1..1       | Customer Id is the key for customer identification.                         |
-| totalPoints    | int          | 1..1       | Total reward points earned by the customer from the transactions within the given date range.      |
-| monthlyData   | Map   | 1..1       | An object where each key is a month (e.g., "JULY"), and the value is an object with "points" and "transactionCount". |
+| customerName      | String          | 1..1       | Name of the customer.                                                       |
+| transaction       | List            | 1..1       | List of transactions done by the customer within the given date range.      |
+| monthlyPoints     | List            | 1..1       | The rewards points calculated and structured monthly wise.                  |
+| totalPoints       | int             | 1..1       | Total reward points earned by the customer from the transactions within the given date range.      |
 ### Response Sample Data
-'{ 
-"customerId": "CUST123", 
-"monthlyData": {
- "JULY": { 
-"points": 90,
- "transactionCount": 1
- },
- "JUNE": {
- "points": 240,
- "transactionCount": 2
- }
- },
- "totalPoints": 330
- }
+'{
+"customerId":"CUST001",
+"customerName":"Alice Smith",
+"transaction":[
+{
+"customerId":"CUST001",
+"transactionId":"TXN1002", 
+"amount":75.5,
+"transactionDate":"2025-02-15"
+},
+{
+"customerId":"CUST001",
+"transactionId":"TXN1003",
+"amount":120.0,
+"transactionDate":"2025-03-01"
+},
+{
+"customerId":"CUST001",
+"transactionId":"TXN1016",
+"amount":105.5,
+"transactionDate":"2025-02-27"
+},
+{
+"customerId":"CUST001",
+"transactionId":"TXN1019",
+"amount":149.0,
+"transactionDate":"2025-03-12"
+}
+],
+"monthlyPoints":[
+{
+"year":2025,
+"month":"FEBRUARY",
+"points":86
+},
+{
+"year":2025,
+"month":"MARCH",
+"points":238
+}
+],
+"totalPoints":324
+}
 '
 | Status Code | Status Description    | Message                                                                                                 |
 | :---------- | :-------------------- | :------------------------------------------------------------------------------------------------------ |
 | 200         | OK                    | The request was successful.                                                                             |
-| 400         | Bad Request           | Invalid Customer Id, Invalid Date Inputs.                                                               |
-| 404         | Not Found             | No transactions found for customerId: CUST123 within the specified date range:                           |
-| 500         | Internal Server Error | An error occurred while fetching rewards! Please, try again                                               |
+| 400         | Bad Request           | Validation error: Invalid Customer Id/ Invalid Date range. From Date cannot be after to-date.           |
+| 404         | Not Found             | Customer not found: No transaction found for the given inputs                                           |
+| 500         | Internal Server Error | Something went wrong. Please try agin later.                                            |
