@@ -1,4 +1,4 @@
-# 🏆 Rewards Program Application
+# 🏆 Customer Rewards Application
 This is a Spring Boot-based REST API application designed to manage customer transactions and calculate customer rewards points earned by the transaction history.
 
 ## 📌 Features
